@@ -12,9 +12,9 @@
   
 ## Servers repositories links:
 
-[Hall Server](https://github.com/andycb479/TMPS-Labs/tree/master/Lab_1)
+[Hall Server](https://github.com/andycb479/PR-Lab-Hall)
 
-[Kitchen Server](https://github.com/andycb479/TMPS-Labs/tree/master/Lab_2)
+[Kitchen Server](https://github.com/andycb479/PR-Lab-Kitchen)
 
 
 ## Run the app (Docker):
