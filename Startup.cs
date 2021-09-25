@@ -7,10 +7,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Refit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hall.Controllers;
+using System.IO;
+using System.Net.Http;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
+using System.Net;
+using Hall.Core;
 
 namespace Hall
 {
@@ -32,10 +40,16 @@ namespace Hall
                {
                     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Hall", Version = "v1" });
                });
+
+               services.AddHttpClient();
+
+               services.AddScoped<IHallRequestHandler, HallRequestHandler>();
+
+               services.AddScoped<HallCore>();
+
           }
 
-          // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-          public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+          public void Configure(IApplicationBuilder app, IWebHostEnvironment env, HallCore hallCore)
           {
                if (env.IsDevelopment())
                {
@@ -56,4 +70,5 @@ namespace Hall
                });
           }
      }
+
 }
