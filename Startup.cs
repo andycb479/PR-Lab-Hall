@@ -18,6 +18,7 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Net;
+using System.Reflection;
 using Hall.Core;
 
 namespace Hall
@@ -30,8 +31,6 @@ namespace Hall
           }
 
           public IConfiguration Configuration { get; }
-
-          // This method gets called by the runtime. Use this method to add services to the container.
           public void ConfigureServices(IServiceCollection services)
           {
 
@@ -43,9 +42,10 @@ namespace Hall
 
                services.AddHttpClient();
 
-               services.AddScoped<IHallRequestHandler, HallRequestHandler>();
+               services.AddSingleton<IHallRequestHandler, HallRequestHandler>();
+               services.AddSingleton<HallCore>();
 
-               services.AddScoped<HallCore>();
+               services.AddAutoMapper(Assembly.GetAssembly(typeof(HallCore)));
 
           }
 
