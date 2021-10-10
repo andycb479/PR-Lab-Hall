@@ -1,7 +1,8 @@
 ﻿namespace Hall.Core.Models
 {
-     public class KitchenOrder : Order
+     public class CookingDetails
      {
+          public int FoodId { get; set; }
           public int CookId { get; set; }
      }
 }

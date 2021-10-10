@@ -1,15 +1,15 @@
-﻿using System;
+﻿using Hall.Controllers;
+using Hall.Core.Models;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
-using Hall.Controllers;
-using Hall.Core.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Hall.Core
 {
@@ -19,8 +19,7 @@ namespace Hall.Core
           private readonly IHallRequestHandler _hallRequestHandler;
           public readonly int TIME_UNIT;
           private static Mutex mut = new();
-          private System.Timers.Timer aTimer;
-
+          private readonly System.Timers.Timer aTimer;
           public BlockingCollection<Table> tables;
 
 
@@ -35,7 +34,6 @@ namespace Hall.Core
                var numberOfWaiters = int.Parse(configuration["Waiters"]);
                TIME_UNIT = int.Parse(configuration["TIME_UNIT"]);
 
-
                for (int i = 1; i < numberOfTables + 1; i++)
                {
                     tables.Add(new Table(i));
@@ -48,7 +46,8 @@ namespace Hall.Core
 
                for (int i = 1; i < numberOfWaiters + 1; i++)
                {
-                    Task.Factory.StartNew(() => { ProcessTables(i); });
+                    var i1 = i;
+                    Task.Factory.StartNew(() => ProcessTables(i1));
                }
 
           }
@@ -59,9 +58,7 @@ namespace Hall.Core
                (sender as System.Timers.Timer).Interval = r.Next(1, 10) * TIME_UNIT;
 
                mut.WaitOne();
-
                var index = r.Next(1, tables.Count + 1);
-
                foreach (var table in tables)
                {
                     if (table.Id == index && table.State == TableState.Free)
@@ -71,18 +68,46 @@ namespace Hall.Core
 
                     }
                }
-
                mut.ReleaseMutex();
           }
 
           public void ProcessTables(int waiterId)
           {
                var r = new Random();
+
+               _hallRequestHandler.OrderReceivedBack += ProcessReceivedOrder;
+               void ProcessReceivedOrder(object sender, ReturnOrder e)
+               {
+                    if (waiterId != e.WaiterId) return;
+                    _logger.LogInformation($"HallOrder with Id {e.OrderId} received by waiter with Id {waiterId}");
+
+                    mut.WaitOne();
+                    foreach (var table in tables)
+                    {
+                         if (table.Id != e.TableId) continue;
+
+                         var tableOrderItems = table.CurrentOrder.Items;
+                         var isOrderTheSame = !tableOrderItems.Except(e.Items).Any() && !e.CookingDetails.Select(x=>x.FoodId).Except(tableOrderItems).Any();
+
+                         if (isOrderTheSame)
+                         {
+                              _logger.LogInformation($"Order accepted by the table with Id {table.Id}");
+                              table.Reset();
+                              _logger.LogInformation($"Table with Id {table.Id} is set to Free");
+                         }
+                         else
+                         {
+                              _logger.LogInformation("Order is not the same. Order Denied!");
+                         }
+                    }
+                    mut.ReleaseMutex();
+               }
+
                while (true)
                {
                     mut.WaitOne();
-
                     foreach (var table in tables)
+                    {
                          if (table.State == TableState.Ready)
                          {
                               table.State = TableState.Processing;
@@ -97,9 +122,11 @@ namespace Hall.Core
 
                               table.State = TableState.Waiting;
                          }
-
+                    }
                     mut.ReleaseMutex();
                }
           }
+
+
      }
 }

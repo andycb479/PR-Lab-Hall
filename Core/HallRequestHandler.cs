@@ -1,18 +1,23 @@
-﻿using Hall.Controllers;
+﻿using System;
+using Hall.Controllers;
 using Hall.Core.Models;
 using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AutoMapper;
 
 namespace Hall.Core
 {
      public class HallRequestHandler : IHallRequestHandler
      {
           private readonly ILogger<HallController> _logger;
+          private readonly IMapper _mapper;
+          public event EventHandler<ReturnOrder> OrderReceivedBack; 
 
-          public HallRequestHandler(ILogger<HallController> logger)
+          public HallRequestHandler(ILogger<HallController> logger, IMapper mapper)
           {
                _logger = logger;
+               _mapper = mapper;
           }
 
           public async Task<HttpResponseMessage> PostOrderToKitchen(HallOrder order)
@@ -28,7 +33,7 @@ namespace Hall.Core
                if (postTask.IsSuccessStatusCode)
                {
                     _logger.LogInformation(
-                         $"Order with Id {order.OrderId} send to the kitchen by Waiter {order.WaiterId}.");
+                         $"HallOrder with Id {order.OrderId} send to the kitchen by Waiter {order.WaiterId}.");
                }
                else
                {
@@ -36,6 +41,13 @@ namespace Hall.Core
                }
 
                return postTask;
+          }
+
+          public virtual void OnOrderReceivedBack(KitchenReturnOrder kitchenReturnOrder)
+          {
+               _logger.LogInformation($"HallOrder with Id {kitchenReturnOrder.OrderId} received by the Hall back. ");
+               var e = _mapper.Map<ReturnOrder>(kitchenReturnOrder);
+               OrderReceivedBack?.Invoke(this,e);
           }
      }
 }
