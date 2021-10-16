@@ -26,7 +26,7 @@ namespace Hall.Core.Models
                     Priority = r.Next(0, 5),
                     Items = new List<int>(r.Next(1, 5)),
                     WaiterId = waiterId,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                };
                for (var i = 0; i < order.Items.Capacity; i++)
                {

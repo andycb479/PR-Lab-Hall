@@ -10,6 +10,7 @@ namespace Hall.Core.Models
           public List<int> Items { get; set; }
           public DateTime CreatedAt { get; set; }
           public int WaiterId { get; set; }
+          public int MaxWait { get; set; }
           public List<CookingDetails> CookingDetails { get; set; }
 
      }
